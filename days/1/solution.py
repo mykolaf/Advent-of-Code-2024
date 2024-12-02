@@ -7,7 +7,6 @@ def solve_p1(filename):
     r = []
     with open(filename, 'r') as file:
         for line in file:
-            # Split the line into numbers and convert to float
             nums = line.strip().split()
             l.append(int(nums[0]))
             r.append(int(nums[1]))
@@ -22,7 +21,6 @@ def solve_p2(filename):
     r = []
     with open(filename, 'r') as file:
         for line in file:
-            # Split the line into numbers and convert to float
             nums = line.strip().split()
             l.append(int(nums[0]))
             r.append(int(nums[1]))
@@ -40,4 +38,4 @@ def main():
 
 
 if __name__ == "__main__":
-    print(main())
+    main()
