@@ -33,10 +33,10 @@ def solve_p2(filename):
 
 def main():
     print(f"Example result: {solve_p1('example.txt')}")
-    print(f"Part1 result: {solve_p1('input1.txt')}")
+    print(f"Part1 result: {solve_p1('input.txt')}")
 
     print(f"Example result: {solve_p2('example.txt')}")
-    print(f"Part2 result: {solve_p2('input1.txt')}")
+    print(f"Part2 result: {solve_p2('input.txt')}")
 
 
 if __name__ == "__main__":
