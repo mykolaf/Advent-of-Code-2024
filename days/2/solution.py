@@ -1,6 +1,3 @@
-
-from collections import Counter
-
 def check_falling(l,r) -> bool:
     return l > r and (l - r) in range(1,4)
 
