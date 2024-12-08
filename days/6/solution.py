@@ -1,101 +1,118 @@
-directions = ['^', '>', 'v', '<']
-movements = {
-    '^': (-1, 0),
-    '>': (0, 1),
-    '<': (0, -1),
-    'v': (1, 0)
-}
+import enum
+from typing import Dict, Tuple, Set
 
-def solve_p1(data, M, N):
-    direction = '^'
-    direction_p = 0
+class Direction(enum.IntEnum):
+    UP = 0
+    RIGHT = 1
+    DOWN = 2
+    LEFT = 3
 
-    x, y = next(k for k, v in data.items() if v == '^')
+class MazeSolver:
+    MOVEMENTS = [(-1, 0), (0, 1), (1, 0), (0, -1)]
 
-    visited = {(x, y)}
+    def __init__(self, grid: Dict[Tuple[int, int], str]):
+        self.grid = grid
+        self.height = max(x for x, _ in grid) + 1
+        self.width = max(y for _, y in grid) + 1
+        self.start = next(pos for pos, val in grid.items() if val == '^')
 
-    while True:
-        if 0 > x+movements[direction][0] or M <= x+movements[direction][0] or \
-            0 > y+movements[direction][1] or N <= y+movements[direction][1]:
-            return len(visited)
-        elif (x+movements[direction][0], y+movements[direction][1]) in data and \
-              data[(x+movements[direction][0], y+movements[direction][1])] == '#':
-            direction_p = (direction_p + 1) % 4
-            direction = directions[direction_p]
+    def is_out_of_bounds(self, pos: Tuple[int, int]) -> bool:
+        x, y = pos
+        return x < 0 or x >= self.height or y < 0 or y >= self.width
 
-        x, y = x+movements[direction][0], y+movements[direction][1]
+    def solve_part1(self) -> int:
+        x, y = self.start
+        direction = Direction.UP
+        visited = {(x, y)}
 
-        visited.add((x, y))
-
-def solve_p2(data, M, N):
-    direction = '^'
-    direction_p = 0
-
-    x, y = next(k for k, v in data.items() if v == '^')
-
-    start_pos = (x, y)
-    visited = {start_pos}
-
-    while True:
-        if 0 > x+movements[direction][0] or M <= x+movements[direction][0] or \
-            0 > y+movements[direction][1] or N <= y+movements[direction][1]:
-            break
-        elif (x+movements[direction][0], y+movements[direction][1]) in data and \
-            data[(x+movements[direction][0], y+movements[direction][1])] == '#':
-            direction_p = (direction_p + 1) % 4
-            direction = directions[direction_p]
-
-        x, y = x+movements[direction][0], y+movements[direction][1]
-
-        visited.add((x, y))
-
-    acc = 0
-    visited.remove(start_pos)
-
-    for x1, y1 in visited:
-        if (x1, y1) == start_pos:
-            continue
-        new_wall = (x1, y1) # new wall
-        direction = '^'
-        direction_p = 0
-        route = {(x, y, direction)}
-        x, y = next(k for k, v in data.items() if v == '^')
-        route = set()
         while True:
-            # print(f"route {route}")
-            # print(f"now {(x, y, direction)}")
-            if 0 > x+movements[direction][0] or M <= x+movements[direction][0] or \
-                0 > y+movements[direction][1] or N <= y+movements[direction][1]:
+            dx, dy = self.MOVEMENTS[direction]
+            next_pos = (x + dx, y + dy)
+
+            if self.is_out_of_bounds(next_pos):
+                return len(visited)
+
+            if next_pos in self.grid and self.grid[next_pos] == '#':
+                direction = Direction((direction + 1) % 4)
+                continue
+
+            x, y = next_pos
+            visited.add((x, y))
+
+    def solve_part2(self) -> int:
+        obstructions = 0
+        visited_positions = self._get_initial_path()
+        visited_positions.remove(self.start)
+
+        for obstruction in visited_positions:
+            if obstruction == self.start:
+                continue
+
+            if self._creates_loop(obstruction):
+                obstructions += 1
+
+        return obstructions
+
+    def _get_initial_path(self) -> Set[Tuple[int, int]]:
+        x, y = self.start
+        direction = Direction.UP
+        visited = {(x, y)}
+
+        while True:
+            dx, dy = self.MOVEMENTS[direction]
+            next_pos = (x + dx, y + dy)
+
+            if self.is_out_of_bounds(next_pos):
                 break
-            elif (x, y, direction) in route:
-                acc += 1 # Loop detected
+
+            if next_pos in self.grid and self.grid[next_pos] == '#':
+                direction = Direction((direction + 1) % 4)
+                continue
+
+            x, y = next_pos
+            visited.add((x, y))
+
+        return visited
+
+    def _creates_loop(self, new_wall: Tuple[int, int]) -> bool:
+        x, y = self.start
+        direction = Direction.UP
+
+        visited_states = set()
+        while True:
+            dx, dy = self.MOVEMENTS[direction]
+            next_pos = (x + dx, y + dy)
+
+            state = (x, y, direction)
+            if state in visited_states:
+                return True
+
+            if self.is_out_of_bounds(next_pos):
                 break
 
-            if ((x+movements[direction][0], y+movements[direction][1]) in data and \
-                data[(x+movements[direction][0], y+movements[direction][1])] == '#') or \
-                 ((x+movements[direction][0], y+movements[direction][1]) == new_wall):
-                direction_p = (direction_p + 1) % 4
-                direction = directions[direction_p]
-            else:
-                route.add((x, y, direction))
-                x, y = x+movements[direction][0], y+movements[direction][1]
+            if (next_pos in self.grid and self.grid[next_pos] == '#') or next_pos == new_wall:
+                direction = Direction((direction + 1) % 4)
+                continue
 
-    return acc
+            visited_states.add(state)
+            x, y = next_pos
 
+        return False
+
+def parse_input(filename: str) -> Dict[Tuple[int, int], str]:
+    grid = {}
+    with open(filename, 'r') as file:
+        for x, line in enumerate(file):
+            for y, char in enumerate(line.strip()):
+                if char != '.':
+                    grid[(x, y)] = char
+    return grid
 
 def main():
-    data = {}
-    with open('input.txt', 'r') as file:
-        lines = file.readlines()
-        M, N = len(lines), len(lines[0])
-        for x, line in enumerate(lines):
-            for y, c in enumerate(line.strip()):
-                if c != '.':
-                    data[(x, y)] = c
-
-    print(f"Part1 result: {solve_p1(data, M, N)}")
-    print(f"Part2 result: {solve_p2(data, M, N)}")
-
+    grid = parse_input('input.txt')
+    solver = MazeSolver(grid)
+    print(f"Part 1 result: {solver.solve_part1()}")
+    print(f"Part 2 result: {solver.solve_part2()}")
 
 if __name__ == "__main__":
     main()
