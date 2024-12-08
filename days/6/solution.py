@@ -62,20 +62,23 @@ def solve_p2(data, M, N):
         x, y = next(k for k, v in data.items() if v == '^')
         route = set()
         while True:
+            # print(f"route {route}")
+            # print(f"now {(x, y, direction)}")
             if 0 > x+movements[direction][0] or M <= x+movements[direction][0] or \
                 0 > y+movements[direction][1] or N <= y+movements[direction][1]:
                 break
             elif (x, y, direction) in route:
                 acc += 1 # Loop detected
                 break
-            elif ((x+movements[direction][0], y+movements[direction][1]) in data and \
+
+            if ((x+movements[direction][0], y+movements[direction][1]) in data and \
                 data[(x+movements[direction][0], y+movements[direction][1])] == '#') or \
                  ((x+movements[direction][0], y+movements[direction][1]) == new_wall):
                 direction_p = (direction_p + 1) % 4
                 direction = directions[direction_p]
-
-            route.add((x, y, direction))
-            x, y = x+movements[direction][0], y+movements[direction][1]
+            else:
+                route.add((x, y, direction))
+                x, y = x+movements[direction][0], y+movements[direction][1]
 
     return acc
 
@@ -86,7 +89,7 @@ def main():
         lines = file.readlines()
         M, N = len(lines), len(lines[0])
         for x, line in enumerate(lines):
-            for y, c in enumerate(line):
+            for y, c in enumerate(line.strip()):
                 if c != '.':
                     data[(x, y)] = c
 
